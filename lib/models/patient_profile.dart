@@ -1,4 +1,3 @@
-
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
@@ -7,7 +6,10 @@ class PatientProfile extends ChangeNotifier {
 
   static final PatientProfile instance = PatientProfile._();
 
-  String name = 'Joyce Jimenez';
+  // These values will be populated after successful login.
+  String name = 'Patient';
+  int? userId;
+  String email = '';
   DateTime? dateOfBirth;
   String phoneNumber = '';
   String address = '';
@@ -30,6 +32,24 @@ class PatientProfile extends ChangeNotifier {
     return result;
   }
 
+  void loadFromLoginData(Map<String, dynamic> data) {
+    userId = data['id'] as int?;
+    name = data['name'] as String? ?? 'Patient';
+    email = data['email'] as String? ?? '';
+    phoneNumber = data['phoneNumber'] as String? ?? '';
+    address = data['address'] as String? ?? '';
+    medicalNotes = data['medicalNotes'] as String? ?? '';
+    photoUrl = data['photoUrl'] as String?;
+
+    final dob = data['dateOfBirth'] as String?;
+    dateOfBirth = dob == null || dob.isEmpty
+        ? null
+        : DateTime.tryParse(dob);
+
+    photoBytes = null;
+    notifyListeners();
+  }
+
   void updateProfile({
     required String name,
     required DateTime? dateOfBirth,
@@ -46,6 +66,20 @@ class PatientProfile extends ChangeNotifier {
     this.medicalNotes = medicalNotes;
     this.photoUrl = photoUrl;
     this.photoBytes = photoBytes;
+
+    notifyListeners();
+  }
+
+  void clearProfile() {
+    userId = null;
+    name = 'Patient';
+    email = '';
+    dateOfBirth = null;
+    phoneNumber = '';
+    address = '';
+    medicalNotes = '';
+    photoUrl = null;
+    photoBytes = null;
 
     notifyListeners();
   }
