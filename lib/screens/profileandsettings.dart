@@ -136,6 +136,50 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
+  
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: _surface,
+        title: const Text(
+          'Log Out',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Are you sure you want to log out?',
+          style: TextStyle(color: _mutedText),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: _mutedText),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(
+              'Log Out',
+              style: TextStyle(color: Color(0xFFFF454D)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || shouldLogout != true) return;
+
+    profile.clearProfile();
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/',
+      (route) => false,
+    );
+  }
+
   Widget _buildAvatar() {
     Widget image;
 
@@ -493,6 +537,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                     const SizedBox(height: 28),
 
                     // Save button
+                    
+                    // Save button
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -510,6 +556,37 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                           backgroundColor: _mauve,
                           foregroundColor: Colors.white,
                           elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Log out button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton.icon(
+                        onPressed: _confirmLogout,
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Log Out',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF6666),
+                          side: const BorderSide(
+                            color: Color(0xFFFF454D),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),

@@ -1,9 +1,11 @@
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:google_sign_in_web/web_only.dart' as google_web;
+
+import '../google_sign_in_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _googleInitialized = false;
   bool _isLoading = false;
+
   StreamSubscription<GoogleSignInAuthenticationEvent>?
       _googleSubscription;
 
@@ -57,7 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Google sign-in failed. Please try again.'),
+              content: Text(
+                'Google sign-in failed. Please try again.',
+              ),
               backgroundColor: _mauve,
             ),
           );
@@ -68,7 +73,9 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _googleInitialized = true);
       }
     } catch (error) {
-      debugPrint('Google Sign-In initialization error: $error');
+      debugPrint(
+        'Google Sign-In initialization error: $error',
+      );
     }
   }
 
@@ -83,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
-    // Demo navigation only. Add credential validation separately.
+    // Demo navigation only; credentials are not validated.
     _openDashboard();
   }
 
@@ -91,17 +98,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_googleInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Google sign-in is still initializing.'),
+          content: Text(
+            'Google sign-in is still initializing.',
+          ),
           backgroundColor: _mauve,
         ),
       );
       return;
     }
 
-    if (kIsWeb) {
-      // On web, use the official Google-rendered button below.
-      return;
-    }
+    // The web button handles Google sign-in on web.
+    if (kIsWeb) return;
 
     try {
       await GoogleSignIn.instance.authenticate();
@@ -110,7 +117,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Google sign-in failed: ${error.description ?? error.code.name}'),
+          content: Text(
+            'Google sign-in failed: '
+            '${error.description ?? error.code.name}',
+          ),
           backgroundColor: _mauve,
         ),
       );
@@ -146,7 +156,9 @@ class _LoginScreenState extends State<LoginScreen> {
               vertical: 30,
             ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(
+                maxWidth: 420,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -203,7 +215,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.stretch,
                       children: [
                         const Text(
                           'Welcome back',
@@ -226,13 +239,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 28),
 
-                        _buildLabel('Email or phone number'),
+                        _buildLabel(
+                          'Email or phone number',
+                        ),
 
                         const SizedBox(height: 9),
 
                         TextField(
                           controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType:
+                              TextInputType.emailAddress,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -283,7 +299,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _login,
+                            onPressed:
+                                _isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _accent,
                               foregroundColor: Colors.white,
@@ -291,7 +308,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _accent.withAlpha(100),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
+                                borderRadius:
+                                    BorderRadius.circular(15),
                               ),
                             ),
                             child: const Text(
@@ -309,7 +327,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Row(
                           children: [
                             Expanded(
-                              child: Divider(color: _mauve),
+                              child: Divider(
+                                color: _mauve,
+                              ),
                             ),
                             Padding(
                               padding: EdgeInsets.symmetric(
@@ -326,7 +346,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             Expanded(
-                              child: Divider(color: _mauve),
+                              child: Divider(
+                                color: _mauve,
+                              ),
                             ),
                           ],
                         ),
@@ -334,9 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 22),
 
                         if (kIsWeb)
-                          Center(
-                            child: google_web.renderButton(),
-                          )
+                          buildGoogleSignInButton()
                         else
                           SizedBox(
                             height: 50,
@@ -357,16 +377,50 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
-                                  color: Colors.white.withAlpha(35),
+                                  color:
+                                      Colors.white.withAlpha(35),
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
+                                  borderRadius:
+                                      BorderRadius.circular(15),
                                 ),
                               ),
                             ),
                           ),
 
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 18),
+
+OutlinedButton.icon(
+  onPressed: () {
+    Navigator.pushNamed(context, '/organization-login');
+  },
+  icon: const Icon(
+    Icons.local_hospital_outlined,
+    color: Color(0xFFE6CACA),
+    size: 21,
+  ),
+  label: const Text(
+    'Sign in as a Clinic or Hospital',
+    style: TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+  style: OutlinedButton.styleFrom(
+    minimumSize: const Size(double.infinity, 50),
+    side: BorderSide(
+      color: Colors.white.withAlpha(35),
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(15),
+    ),
+  ),
+),
+
+const SizedBox(height: 8),
+
+                        
                       ],
                     ),
                   ),
