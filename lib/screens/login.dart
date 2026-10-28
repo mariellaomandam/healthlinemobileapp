@@ -3,6 +3,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../google_sign_in_button.dart';
@@ -89,9 +91,57 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _login() {
-    // Demo navigation only; credentials are not validated.
-    _openDashboard();
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email and password.')),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email, password: password,
+      );
+      final user = credential.user!;
+      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final snapshot = await userRef.get();
+      if (snapshot.exists && snapshot.data()?['role'] != 'patient') {
+        await FirebaseAuth.instance.signOut();
+        throw FirebaseAuthException(
+          code: 'wrong-role',
+          message: 'This account is not registered as a patient.',
+        );
+      }
+      await userRef.set({
+        'uid': user.uid,
+        'role': 'patient',
+        'displayName': user.displayName ?? '',
+        'email': user.email ?? email,
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (!snapshot.exists) 'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      if (mounted) _openDashboard();
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      final message = error.code == 'wrong-role'
+          ? (error.message ?? 'This account has a different role.')
+          : error.code == 'user-not-found' || error.code == 'wrong-password' || error.code == 'invalid-credential'
+              ? 'Incorrect email or password.'
+              : error.message ?? 'Unable to sign in.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: _mauve),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sign in failed: $error'), backgroundColor: _mauve),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _signInWithGoogle() async {

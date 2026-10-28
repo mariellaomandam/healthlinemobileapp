@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OrganizationLoginScreen extends StatefulWidget {
   const OrganizationLoginScreen({super.key});
@@ -30,13 +32,57 @@ class _OrganizationLoginScreenState extends State<OrganizationLoginScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  bool _isLoading = false;
+
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/organization-dashboard',
-      (route) => false,
+    setState(() => _isLoading = true);
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
+      final user = credential.user!;
+      final users = FirebaseFirestore.instance.collection('users');
+      final userRef = users.doc(user.uid);
+      final snapshot = await userRef.get();
+      if (snapshot.exists && snapshot.data()?['role'] != 'clinic') {
+        await FirebaseAuth.instance.signOut();
+        throw FirebaseAuthException(
+          code: 'wrong-role',
+          message: 'This account is not registered as a clinic.',
+        );
+      }
+      await userRef.set({
+        'uid': user.uid,
+        'role': 'clinic',
+        'displayName': _organizationController.text.trim(),
+        'email': user.email ?? _emailController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (!snapshot.exists) 'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context, '/organization-dashboard', (route) => false,
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      final message = error.code == 'wrong-role'
+          ? (error.message ?? 'This account has a different role.')
+          : error.code == 'user-not-found' || error.code == 'wrong-password' || error.code == 'invalid-credential'
+              ? 'Incorrect email or password.'
+              : error.message ?? 'Unable to sign in.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: _mauve),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sign in failed: $error'), backgroundColor: _mauve),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   InputDecoration _decoration({
@@ -195,9 +241,9 @@ class _OrganizationLoginScreenState extends State<OrganizationLoginScreen> {
                       SizedBox(
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed: _submit,
+                          onPressed: _isLoading ? null : _submit,
                           icon: const Icon(Icons.login_rounded),
-                          label: const Text('Sign In'),
+                          label: Text(_isLoading ? 'Signing in…' : 'Sign In'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _accent,
                             foregroundColor: Colors.white,

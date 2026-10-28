@@ -1,58 +1,29 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../services/healthline_firestore_service.dart';
 
-class OrganizationSectionScreen extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  const OrganizationSectionScreen({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  static const background = Color(0xFF101010);
-  static const surface = Color(0xFF1C1A1A);
-  static const mauve = Color(0xFFB78A9B);
-  static const muted = Color(0xFFAAAAAA);
-  static const lightMauve = Color(0xFFE6CACA);
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: background,
-    appBar: AppBar(backgroundColor: background, foregroundColor: Colors.white, elevation: 0, title: Text(title)),
-    body: ListView(padding: const EdgeInsets.all(20), children: [
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withAlpha(15))),
-        child: Row(children: [
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(color: mauve.withAlpha(45), borderRadius: BorderRadius.circular(16)),
-            child: Icon(icon, color: lightMauve, size: 27),
-          ),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 5),
-            Text(subtitle, style: const TextStyle(color: muted, fontSize: 12, height: 1.4)),
-          ])),
-        ]),
-      ),
-      const SizedBox(height: 18),
-      Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(18)),
-        child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(Icons.construction_rounded, color: mauve, size: 25),
-          SizedBox(height: 12),
-          Text('Section UI placeholder', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-          SizedBox(height: 7),
-          Text('This screen is a visual starter. Add the controls and connect it to shared appointment, patient, schedule, or message data before using it with real accounts.',
-            style: TextStyle(color: muted, fontSize: 12, height: 1.5)),
-        ]),
-      ),
-    ]),
-  );
+class OrganizationSectionScreen extends StatefulWidget {
+  final String title; final String subtitle; final IconData icon;
+  const OrganizationSectionScreen({super.key, required this.title, required this.subtitle, required this.icon});
+  @override State<OrganizationSectionScreen> createState()=>_OrganizationSectionScreenState();
+}
+class _OrganizationSectionScreenState extends State<OrganizationSectionScreen> {
+  final api=HealthLineFirestoreService.instance;
+  final name=TextEditingController(), address=TextEditingController(), contact=TextEditingController(), description=TextEditingController(), services=TextEditingController(), image=TextEditingController();
+  final doctorName=TextEditingController(), specialty=TextEditingController(), bio=TextEditingController(), doctorImage=TextEditingController();
+  String? selectedDoctor; bool busy=false;
+  static const bg=Color(0xFF101010), surface=Color(0xFF1C1A1A), mauve=Color(0xFFB78A9B), muted=Color(0xFFAAAAAA);
+  @override void dispose(){ for(final c in [name,address,contact,description,services,image,doctorName,specialty,bio,doctorImage]){c.dispose();} super.dispose(); }
+  void notice(String text){if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(text)));}
+  Future<void> saveProfile() async { if(name.text.trim().isEmpty||address.text.trim().isEmpty){notice('Clinic name and address are required.');return;} setState(()=>busy=true); try { await api.ensureUser(role:'clinic',displayName:name.text.trim()); await api.saveClinicProfile(name:name.text,address:address.text,contact:contact.text,description:description.text,services:services.text.split(',').map((s)=>s.trim()).where((s)=>s.isNotEmpty).toList(),imageUrl:image.text,publish:true); notice('Clinic profile saved and published.'); } catch(e){notice('Could not save profile: $e');} finally{if(mounted)setState(()=>busy=false);} }
+  Future<void> saveDoctor() async {if(doctorName.text.trim().isEmpty||specialty.text.trim().isEmpty){notice('Doctor name and specialty are required.');return;} try{await api.saveDoctor(name:doctorName.text,specialty:specialty.text,bio:bio.text,imageUrl:doctorImage.text); doctorName.clear(); specialty.clear(); bio.clear(); doctorImage.clear(); notice('Doctor saved.');}catch(e){notice('Could not save doctor: $e');}}
+  Future<void> addSlot() async {if(selectedDoctor==null){notice('Select a doctor first.');return;} final day=await showDatePicker(context:context,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:365)),initialDate:DateTime.now()); if(day==null||!mounted)return; final time=await showTimePicker(context:context,initialTime:TimeOfDay.now()); if(time==null)return; final start=DateTime(day.year,day.month,day.day,time.hour,time.minute); try{await api.addAvailability(doctorId:selectedDoctor!,start:start,end:start.add(const Duration(minutes:30)));notice('30-minute availability added.');}catch(e){notice('Could not add availability: $e');}}
+  @override Widget build(BuildContext context)=>Scaffold(backgroundColor:bg,appBar:AppBar(backgroundColor:bg,foregroundColor:Colors.white,title:Text(widget.title)),body: switch(widget.title){'Clinic Profile'=>_profile(),'Doctors'=>_doctors(),'Schedule'=>_schedule(),'Appointment Requests'=>_appointments(),_=>_placeholder()});
+  Widget _field(String label,TextEditingController c,{int lines=1})=>Padding(padding:const EdgeInsets.only(bottom:12),child:TextField(controller:c,maxLines:lines,style:const TextStyle(color:Colors.white),decoration:InputDecoration(labelText:label,labelStyle:const TextStyle(color:muted),filled:true,fillColor:surface,border:OutlineInputBorder(borderRadius:BorderRadius.circular(12)))));
+  Widget _button(String label,VoidCallback? action)=>SizedBox(width:double.infinity,child:ElevatedButton(onPressed:action,style:ElevatedButton.styleFrom(backgroundColor:mauve,foregroundColor:Colors.white),child:Text(label)));
+  Widget _profile()=>FutureBuilder<DocumentSnapshot<Map<String,dynamic>>>(future:api.db.collection('clinics').doc(api.requireUser.uid).get(),builder:(context,s){if(s.hasData&&s.data!.exists){final d=s.data!.data()!; if(name.text.isEmpty){name.text=d['name']??'';address.text=d['address']??'';contact.text=d['contact']??'';description.text=d['description']??'';services.text=(d['services'] as List? ?? []).join(', ');image.text=d['imageUrl']??'';}} return ListView(padding:const EdgeInsets.all(20),children:[const Text('Complete your clinic profile. Published profiles appear to patients.',style:TextStyle(color:muted)),const SizedBox(height:16),_field('Clinic / hospital name',name),_field('Address',address),_field('Contact number',contact),_field('Description',description,lines:3),_field('Services (comma-separated, e.g. Check-up, Vaccination)',services,lines:2),_field('Image URL (optional; no Firebase Storage required)',image),_button(busy?'Saving...':'Save and publish profile',busy?null:saveProfile)]);});
+  Widget _doctors()=>ListView(padding:const EdgeInsets.all(20),children:[_field('Doctor full name',doctorName),_field('Specialty',specialty),_field('Doctor bio',bio,lines:3),_field('Doctor image URL (optional)',doctorImage),_button('Save doctor',saveDoctor),const SizedBox(height:20),const Text('Your doctors',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.bold)),StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(stream:api.clinicDoctors(),builder:(context,s){if(s.hasError)return Text('Error: ${s.error}',style:const TextStyle(color:Colors.red));if(!s.hasData)return const Center(child:CircularProgressIndicator());if(s.data!.docs.isEmpty)return const Text('No doctors added yet.',style:TextStyle(color:muted));return Column(children:s.data!.docs.map((d){final x=d.data();return Card(color:surface,child:ListTile(title:Text(x['name']??'Doctor',style:const TextStyle(color:Colors.white)),subtitle:Text(x['specialty']??'',style:const TextStyle(color:muted)),trailing:TextButton(onPressed:()=>setState(()=>selectedDoctor=d.id),child:const Text('Use for schedule'))));}).toList());})]);
+  Widget _schedule()=>ListView(padding:const EdgeInsets.all(20),children:[const Text('Choose a doctor, then add an available 30-minute slot.',style:TextStyle(color:muted)),const SizedBox(height:12),StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(stream:api.clinicDoctors(),builder:(context,s){if(!s.hasData)return const CircularProgressIndicator();final docs=s.data!.docs;return DropdownButtonFormField<String>(value:selectedDoctor,dropdownColor:surface,style:const TextStyle(color:Colors.white),decoration:const InputDecoration(labelText:'Doctor',labelStyle:TextStyle(color:muted)),items:docs.map((d)=>DropdownMenuItem(value:d.id,child:Text(d.data()['name']??'Doctor'))).toList(),onChanged:(v)=>setState(()=>selectedDoctor=v));}),const SizedBox(height:14),_button('Add availability',addSlot),const SizedBox(height:20),StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(stream:api.db.collection('availability').where('clinicId',isEqualTo:api.requireUser.uid).orderBy('startAt').snapshots(),builder:(context,s){if(s.hasError)return Text('Error: ${s.error}',style:const TextStyle(color:Colors.red));if(!s.hasData)return const CircularProgressIndicator();return Column(children:s.data!.docs.map((d){final x=d.data();final dt=(x['startAt'] as Timestamp).toDate();return Card(color:surface,child:ListTile(title:Text(dt.toLocal().toString(),style:const TextStyle(color:Colors.white)),subtitle:Text('Status: ${x['status']}',style:const TextStyle(color:muted))));}).toList());})]);
+  Widget _appointments()=>StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(stream:api.clinicAppointments(),builder:(context,s){if(s.hasError)return Center(child:Text('${s.error}',style:const TextStyle(color:Colors.red)));if(!s.hasData)return const Center(child:CircularProgressIndicator());return ListView(padding:const EdgeInsets.all(16),children:s.data!.docs.map((d){final x=d.data();return Card(color:surface,child:ListTile(title:Text('${x['doctorName']} · ${x['patientUid']}',style:const TextStyle(color:Colors.white)),subtitle:Text('${x['dateTime'] is Timestamp?(x['dateTime'] as Timestamp).toDate():''}\n${x['status']}',style:const TextStyle(color:muted))));}).toList());});
+  Widget _placeholder()=>const Center(child:Text('This section is not connected yet.',style:TextStyle(color:muted)));
 }
