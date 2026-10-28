@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 
+import 'firebase_options.dart';
 import 'screens/login.dart';
 import 'screens/dashboard.dart';
 import 'screens/appointments.dart';
 import 'screens/messages.dart';
 import 'screens/profileandsettings.dart';
 import 'screens/organization_login.dart';
+import 'screens/organization_dashboard.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
     const ProviderScope(
       child: HealthLineApp(),
@@ -52,6 +60,9 @@ class HealthLineApp extends StatelessWidget {
             break;
           case '/organization-login':
             page = const OrganizationLoginScreen();
+            break;
+          case '/organization-dashboard':
+            page = const OrganizationDashboardScreen();
             break;
           default:
             page = const LoginScreen();

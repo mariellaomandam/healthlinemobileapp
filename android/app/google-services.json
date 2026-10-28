@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "800513016455",
+    "project_id": "healthline-ph",
+    "storage_bucket": "healthline-ph.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800513016455:android:256bbc8c8d0d235e7d6e22",
+        "android_client_info": {
+          "package_name": "com.example.healthlinephfinalrepo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8fAsVOLRpsf4qwxTvDBt7ftD_rbbsA50"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

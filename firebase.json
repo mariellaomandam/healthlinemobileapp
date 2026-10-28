@@ -1,0 +1,28 @@
+﻿{
+    "flutter":  {
+                    "platforms":  {
+                                      "android":  {
+                                                      "default":  {
+                                                                      "projectId":  "healthline-ph",
+                                                                      "appId":  "1:800513016455:android:256bbc8c8d0d235e7d6e22",
+                                                                      "fileOutput":  "android/app/google-services.json"
+                                                                  }
+                                                  },
+                                      "dart":  {
+                                                   "lib/firebase_options.dart":  {
+                                                                                     "projectId":  "healthline-ph",
+                                                                                     "configurations":  {
+                                                                                                            "android":  "1:800513016455:android:256bbc8c8d0d235e7d6e22",
+                                                                                                            "ios":  "1:800513016455:ios:881eab1a7f38b2547d6e22",
+                                                                                                            "macos":  "1:800513016455:ios:881eab1a7f38b2547d6e22",
+                                                                                                            "web":  "1:800513016455:web:b5026f6d9b4ebdef7d6e22",
+                                                                                                            "windows":  "1:800513016455:web:cce2d42e70e51f6c7d6e22"
+                                                                                                        }
+                                                                                 }
+                                               }
+                                  }
+                },
+    "firestore":  {
+                      "rules":  "firestore.rules"
+                  }
+}

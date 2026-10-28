@@ -32,15 +32,11 @@ class _OrganizationLoginScreenState extends State<OrganizationLoginScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Organization authentication is not connected yet. '
-          'Please connect your clinic or hospital authentication service.',
-        ),
-      ),
-    );
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/organization-dashboard',
+      (route) => false,
+      );
   }
 
   InputDecoration _decoration({

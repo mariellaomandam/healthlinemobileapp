@@ -1,0 +1,94 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.role in ['patient', 'clinic'];
+      allow delete: if false;
+    }
+
+    match /clinics/{clinicId} {
+      allow read: if signedIn()
+        && (resource.data.published == true
+            || request.auth.uid == clinicId);
+      allow create, update: if signedIn()
+        && request.auth.uid == clinicId
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if signedIn()
+        && (resource.data.active == true
+            || resource.data.clinicId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.clinicId == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.clinicId == request.auth.uid
+        && request.resource.data.clinicId == resource.data.clinicId;
+      allow delete: if false;
+    }
+
+    match /availability/{slotId} {
+      allow read: if signedIn()
+        && (resource.data.status == 'available'
+            || resource.data.clinicId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.clinicId == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.clinicId == request.auth.uid
+        && request.resource.data.clinicId == resource.data.clinicId;
+      allow delete: if false;
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if signedIn()
+        && (resource.data.patientUid == request.auth.uid
+            || resource.data.clinicId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.patientUid == request.auth.uid
+        && request.resource.data.status == 'requested';
+      allow update: if signedIn()
+        && resource.data.clinicId == request.auth.uid
+        && request.resource.data.patientUid == resource.data.patientUid
+        && request.resource.data.clinicId == resource.data.clinicId;
+      allow delete: if false;
+    }
+
+    match /conversations/{conversationId} {
+      allow read: if signedIn()
+        && request.auth.uid in resource.data.participantUids;
+      allow create: if signedIn()
+        && request.auth.uid in request.resource.data.participantUids
+        && request.resource.data.participantUids.size() == 2;
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participantUids
+        && request.resource.data.participantUids
+            == resource.data.participantUids;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function conversation() {
+          return get(/databases/$(database)/documents/conversations/$(conversationId)).data;
+        }
+
+        allow read: if signedIn()
+          && request.auth.uid in conversation().participantUids;
+        allow create: if signedIn()
+          && request.auth.uid in conversation().participantUids
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0;
+        allow update, delete: if false;
+      }
+    }
+  }
+}
