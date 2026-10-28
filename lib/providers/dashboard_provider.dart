@@ -17,8 +17,8 @@ class SearchQueryNotifier extends Notifier<String> {
 /// Navigation stays outside widget rendering and is triggered by provider state.
 final dashboardNavigationProvider =
     NotifierProvider<DashboardNavigationNotifier, String?>(
-  DashboardNavigationNotifier.new,
-);
+      DashboardNavigationNotifier.new,
+    );
 
 class DashboardNavigationNotifier extends Notifier<String?> {
   @override

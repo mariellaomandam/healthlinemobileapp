@@ -24,8 +24,7 @@ class PatientProfile extends ChangeNotifier {
     int result = today.year - dateOfBirth!.year;
 
     if (today.month < dateOfBirth!.month ||
-        (today.month == dateOfBirth!.month &&
-            today.day < dateOfBirth!.day)) {
+        (today.month == dateOfBirth!.month && today.day < dateOfBirth!.day)) {
       result--;
     }
 
@@ -42,9 +41,7 @@ class PatientProfile extends ChangeNotifier {
     photoUrl = data['photoUrl'] as String?;
 
     final dob = data['dateOfBirth'] as String?;
-    dateOfBirth = dob == null || dob.isEmpty
-        ? null
-        : DateTime.tryParse(dob);
+    dateOfBirth = dob == null || dob.isEmpty ? null : DateTime.tryParse(dob);
 
     photoBytes = null;
     notifyListeners();
