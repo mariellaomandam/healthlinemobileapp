@@ -147,7 +147,7 @@ The application may process user account information, clinic details, appointmen
 
 ## AI Assistance Disclosure
 
-AI tools may have been used during development to assist with code explanations, documentation, debugging, and implementation suggestions. The specific tools and extent of assistance should be described in the accompanying `AI_DISCLOSURE.md` file.
+AI tool, ChatGPT have been used during development to assist with code explanations, documentation, debugging, and implementation suggestions. The specific tools and extent of assistance should be described in the accompanying `AI_DISCLOSURE.md` file.
 
 ## Project Status
 
