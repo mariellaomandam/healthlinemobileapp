@@ -29,10 +29,3 @@ The project team is responsible for reviewing the code, validating functionality
 AI assistance does not guarantee that generated code is correct, secure, compatible with the existing codebase, or fully functional.
 
 Features and technical claims should be verified against the actual source code, Firebase configuration, and application behavior. Any AI-generated code incorporated into the project should be reviewed and tested before submission or deployment.
-
-## Academic Integrity
-
-AI assistance should be disclosed in accordance with the institution's academic integrity policy and the instructor's requirements. The project team should accurately identify which parts were developed independently and which parts received AI assistance.
-
-This disclosure should be updated to reflect the actual tools used and the extent of their contribution.
-
