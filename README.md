@@ -155,5 +155,12 @@ This repository contains the HealthLine PH application source code. Feature comp
 
 ## License
 
-No license is specified in this README. Add an appropriate license if the project is intended for distribution or reuse.
+No license is specified in this README.
+
+## Members:
+
+Pavo, M.
+Undangan, V.S.
+
+This is a school project deliverable.
 
